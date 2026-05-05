@@ -1,0 +1,25 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+## Azure Functions local settings — contains connection strings, never commit
+local.settings.json
+
+## Azure Developer CLI
+.azure/
+
+## Azurite local storage emulator
+__azurite_db_*.json
+__blobstorage__/
+__queuestorage__/
+__tablestorage__/
+azurite-debug.log
+AzuriteConfig
+
+## Output
+publish/
+.azure
+.claude

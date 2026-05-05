@@ -1,0 +1,135 @@
+### MCP tool discovery — lists all available tools
+# Start the function app locally (func start), then run these requests.
+# The MCP endpoint is a webhook — it expects the MCP protocol format.
+# For interactive testing, use VS Code with the mcp.json config (easier).
+# These .http requests are useful for verifying the server is up and parsing responses.
+
+@baseUrl = http://localhost:7071
+@mcpEndpoint = {{baseUrl}}/runtime/webhooks/mcp
+
+### Initialize — required first call to establish the MCP session
+POST {{mcpEndpoint}}
+Content-Type: application/json
+Accept: application/json, text/event-stream
+
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "initialize",
+  "params": {
+    "protocolVersion": "2024-11-05",
+    "capabilities": {},
+    "clientInfo": {
+      "name": "test-client",
+      "version": "1.0.0"
+    }
+  }
+}
+
+###
+
+### List tools — returns all registered MCP tools and their schemas
+POST {{mcpEndpoint}}
+Content-Type: application/json
+Accept: application/json, text/event-stream
+
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/list",
+  "params": {}
+}
+
+###
+
+### Call hello tool
+POST {{mcpEndpoint}}
+Content-Type: application/json
+Accept: application/json, text/event-stream
+
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": {
+    "name": "hello",
+    "arguments": {
+      "name": "Stuart"
+    }
+  }
+}
+
+###
+
+### List products
+POST {{mcpEndpoint}}
+Content-Type: application/json
+Accept: application/json, text/event-stream
+
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "method": "tools/call",
+  "params": {
+    "name": "list_products",
+    "arguments": {}
+  }
+}
+
+###
+
+### Get product info
+POST {{mcpEndpoint}}
+Content-Type: application/json
+Accept: application/json, text/event-stream
+
+{
+  "jsonrpc": "2.0",
+  "id": 5,
+  "method": "tools/call",
+  "params": {
+    "name": "get_product_info",
+    "arguments": {
+      "sku": "WIDGET-001"
+    }
+  }
+}
+
+###
+
+### Save a note (requires Azurite running)
+POST {{mcpEndpoint}}
+Content-Type: application/json
+Accept: application/json, text/event-stream
+
+{
+  "jsonrpc": "2.0",
+  "id": 6,
+  "method": "tools/call",
+  "params": {
+    "name": "save_note",
+    "arguments": {
+      "title": "my-first-note",
+      "content": "This is a test note saved via the MCP extension."
+    }
+  }
+}
+
+###
+
+### Get a note (requires Azurite running)
+POST {{mcpEndpoint}}
+Content-Type: application/json
+Accept: application/json, text/event-stream
+
+{
+  "jsonrpc": "2.0",
+  "id": 7,
+  "method": "tools/call",
+  "params": {
+    "name": "get_note",
+    "arguments": {
+      "title": "my-first-note"
+    }
+  }
+}
