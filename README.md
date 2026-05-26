@@ -47,17 +47,22 @@ http://localhost:7071/runtime/webhooks/mcp
 
 The repo includes a `.vscode/mcp.json` with ready-made server configurations for both local and remote targets. In VS Code with GitHub Copilot, this is picked up automatically.
 
-For Claude Desktop or other clients, add the local server URL to your MCP config:
+> **Note:** The `"url"` / `"type": "http"` style config (Custom Connectors) routes through Anthropic's servers and requires your MCP endpoint to be publicly reachable. Use it only for the deployed Azure URL, not for local development.
 
-```json
-{
-  "mcpServers": {
-    "functions-mcp-demo": {
+```
+ "servers": {
+    "local-mcp-demo": {
       "type": "http",
       "url": "http://localhost:7071/runtime/webhooks/mcp"
+    },
+    "remote-mcp-demo": {
+      "type": "http",
+      "url": "https://${input:functionapp-host}/runtime/webhooks/mcp",
+      "headers": {
+        "x-functions-key": "${input:functions-mcp-extension-system-key}"
+      }
     }
   }
-}
 ```
 
 ## Deploying to Azure
