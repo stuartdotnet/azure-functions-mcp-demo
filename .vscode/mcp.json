@@ -13,11 +13,11 @@
     }
   ],
   "servers": {
-    "local-mcp-demo": {
+    "ProductTools-local-mcp-demo": {
       "type": "http",
       "url": "http://localhost:7071/runtime/webhooks/mcp"
     },
-    "remote-mcp-demo": {
+    "ProductTools-remote-mcp-demo": {
       "type": "http",
       "url": "https://${input:functionapp-host}/runtime/webhooks/mcp",
       "headers": {

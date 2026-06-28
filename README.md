@@ -43,10 +43,10 @@ dotnet build
 func start --script-root bin/Debug/net10.0
 ```
 
-The MCP SSE endpoint will be available at:
+The MCP endpoint will be available at:
 
 ```
-http://localhost:7071/runtime/webhooks/mcp/sse
+http://localhost:7071/runtime/webhooks/mcp
 ```
 
 **3. Connect your MCP client**
@@ -127,9 +127,12 @@ The `.vscode/mcp.json` uses VS Code's input variable mechanism to avoid hardcodi
     }
   ],
   "servers": {
-    "FunctionsMcpDemo-azure": {
+    "ProductTools-remote-mcp-demo": {
       "type": "http",
-      "url": "https://${input:functionapp-host}/runtime/webhooks/mcp/sse?code=${input:functions-mcp-extension-system-key}"
+      "url": "https://${input:functionapp-host}/runtime/webhooks/mcp",
+      "headers": {
+        "x-functions-key": "${input:functions-mcp-extension-system-key}"
+      }
     }
   }
 }

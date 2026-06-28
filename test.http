@@ -42,7 +42,7 @@ Accept: application/json, text/event-stream
 
 ###
 
-### Call hello tool
+### List products — returns all SKUs, names, prices, and stock status
 POST {{mcpEndpoint}}
 Content-Type: application/json
 Accept: application/json, text/event-stream
@@ -52,16 +52,14 @@ Accept: application/json, text/event-stream
   "id": 3,
   "method": "tools/call",
   "params": {
-    "name": "hello",
-    "arguments": {
-      "name": "Stuart"
-    }
+    "name": "list_products",
+    "arguments": {}
   }
 }
 
 ###
 
-### List products
+### Get product info — look up a specific SKU
 POST {{mcpEndpoint}}
 Content-Type: application/json
 Accept: application/json, text/event-stream
@@ -71,14 +69,16 @@ Accept: application/json, text/event-stream
   "id": 4,
   "method": "tools/call",
   "params": {
-    "name": "list_products",
-    "arguments": {}
+    "name": "get_product_info",
+    "arguments": {
+      "sku": "CTL-PRO-X"
+    }
   }
 }
 
 ###
 
-### Get product info
+### Get product info — unknown SKU (tests not-found path)
 POST {{mcpEndpoint}}
 Content-Type: application/json
 Accept: application/json, text/event-stream
@@ -90,14 +90,14 @@ Accept: application/json, text/event-stream
   "params": {
     "name": "get_product_info",
     "arguments": {
-      "sku": "WIDGET-001"
+      "sku": "UNKNOWN-SKU"
     }
   }
 }
 
 ###
 
-### Save a note (requires Azurite running)
+### Save product details (requires Azurite running)
 POST {{mcpEndpoint}}
 Content-Type: application/json
 Accept: application/json, text/event-stream
@@ -107,17 +107,17 @@ Accept: application/json, text/event-stream
   "id": 6,
   "method": "tools/call",
   "params": {
-    "name": "save_note",
+    "name": "save_product_details",
     "arguments": {
-      "title": "my-first-note",
-      "content": "This is a test note saved via the MCP extension."
+      "sku": "CTL-PRO-X",
+      "details": "The Pro Gaming Controller features a 1000Hz polling rate, Hall effect thumbsticks, and a 40-hour battery life. Compatible with PC and console."
     }
   }
 }
 
 ###
 
-### Get a note (requires Azurite running)
+### Get product details (requires Azurite running)
 POST {{mcpEndpoint}}
 Content-Type: application/json
 Accept: application/json, text/event-stream
@@ -127,9 +127,28 @@ Accept: application/json, text/event-stream
   "id": 7,
   "method": "tools/call",
   "params": {
-    "name": "get_note",
+    "name": "get_product_details",
     "arguments": {
-      "title": "my-first-note"
+      "sku": "CTL-PRO-X"
+    }
+  }
+}
+
+###
+
+### Get product details — SKU with no saved details yet
+POST {{mcpEndpoint}}
+Content-Type: application/json
+Accept: application/json, text/event-stream
+
+{
+  "jsonrpc": "2.0",
+  "id": 8,
+  "method": "tools/call",
+  "params": {
+    "name": "get_product_details",
+    "arguments": {
+      "sku": "HEADSET-7X"
     }
   }
 }

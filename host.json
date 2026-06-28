@@ -12,7 +12,7 @@
   "extensions": {
     "mcp": {
       "instructions": "Tools for a product catalogue and personal note storage. Use list_products to discover available SKUs, get_product_info to look up pricing and stock, and save_note/get_note to manage notes.",
-      "serverName": "FunctionsMcpDemo",
+      "serverName": "ProductTools",
       "serverVersion": "1.0.0",
       "encryptClientState": true,
       "system": {
