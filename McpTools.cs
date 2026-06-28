@@ -4,24 +4,6 @@ using Microsoft.Extensions.Logging;
 
 namespace FunctionsMcpDemo;
 
-// ─── Greeting ─────────────────────────────────────────────────────────────────
-// No storage required. Good for verifying the MCP server is up before testing
-// anything that needs Azurite.
-
-public class GreetingTools(ILogger<GreetingTools> logger)
-{
-    [Function(nameof(Hello))]
-    public string Hello(
-        [McpToolTrigger("hello", "Greets a user by name. Use this to verify the MCP server is responding.")]
-            ToolInvocationContext context,
-        [McpToolProperty("name", "The name to greet. Omit for a generic greeting.")]
-            string? name)
-    {
-        logger.LogInformation("Hello tool invoked for: {Name}", name ?? "(no name)");
-        return $"Hello {name ?? "there"}! I am an MCP tool running on Azure Functions.";
-    }
-}
-
 // ─── Product catalogue ────────────────────────────────────────────────────────
 // In-memory data. No storage required.
 // Shows: McpToolProperty with isRequired, multiple tools in one class.
@@ -30,10 +12,12 @@ public class ProductTools(ILogger<ProductTools> logger)
 {
     private static readonly Dictionary<string, Product> Catalogue = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["WIDGET-001"]  = new("Blue Widget",            12.99m, "In stock"),
-        ["GADGET-PRO"]  = new("Professional Gadget",    89.99m, "Limited stock"),
-        ["DOOHICKEY-X"] = new("Deluxe Doohickey",       34.50m, "Out of stock"),
-        ["THINGAMAJIG"] = new("Standard Thingamajig",    7.99m, "In stock"),
+        ["CTL-PRO-X"]   = new("Pro Gaming Controller",  59.99m, "In stock"),
+        ["HEADSET-7X"]  = new("7.1 Surround Headset",   89.99m, "Limited stock"),
+        ["MECH-KB-TKL"] = new("Mechanical TKL Keyboard", 129.99m, "In stock"),
+        ["MOUSE-DPI-4K"] = new("4K DPI Gaming Mouse",   49.99m, "Out of stock"),
+        ["CHAIR-ERGO"]  = new("Ergonomic Gaming Chair", 349.99m, "Limited stock"),
+        ["MON-165HZ"]   = new("165Hz 27\" Gaming Monitor", 299.99m, "In stock"),
     };
 
     [Function(nameof(GetProductInfo))]
@@ -69,40 +53,42 @@ public class ProductTools(ILogger<ProductTools> logger)
     private record Product(string Name, decimal Price, string StockStatus);
 }
 
-// ─── Notes ────────────────────────────────────────────────────────────────────
-// Reads and writes to Azure Blob Storage.
+// ─── Product details ──────────────────────────────────────────────────────────
+// Reads and writes extended product descriptions to Azure Blob Storage.
 // Requires Azurite locally (or a real storage account).
 // Shows: MCP trigger + Azure binding composability.
 
-public class NoteTools(ILogger<NoteTools> logger)
+public class ProductDetailsTools(ILogger<ProductDetailsTools> logger)
 {
-    private const string BlobPath = "notes/{mcptoolargs.title}.txt";
+    private const string BlobPath = "products/{mcptoolargs.sku}.txt";
 
-    [Function(nameof(SaveNote))]
+    [Function(nameof(SaveProductDetails))]
     [BlobOutput(BlobPath)]
-    public string SaveNote(
-        [McpToolTrigger("save_note",
-            "Saves a text note to storage with a given title. " +
-            "The title becomes the filename. Overwrites any existing note with the same title.")]
+    public string SaveProductDetails(
+        [McpToolTrigger("save_product_details",
+            "Saves an extended description for a product SKU to storage. " +
+            "Use list_products to find valid SKUs. Overwrites any existing description.")]
             ToolInvocationContext context,
-        [McpToolProperty("title", "The note title. Use lowercase letters, numbers, and hyphens only.", isRequired: true)]
-            string title,
-        [McpToolProperty("content", "The text content to save.", isRequired: true)]
-            string content)
+        [McpToolProperty("sku", "The product SKU (e.g. WIDGET-001). Use list_products to find valid SKUs.", isRequired: true)]
+            string sku,
+        [McpToolProperty("details", "The extended product description to save.", isRequired: true)]
+            string details)
     {
-        logger.LogInformation("Saving note: {Title} ({Length} chars)", title, content.Length);
-        return content;
+        logger.LogInformation("Saving product details for SKU: {Sku} ({Length} chars)", sku, details.Length);
+        return details;
     }
 
-    [Function(nameof(GetNote))]
-    public string GetNote(
-        [McpToolTrigger("get_note", "Retrieves a previously saved note by its title.")]
+    [Function(nameof(GetProductDetails))]
+    public string GetProductDetails(
+        [McpToolTrigger("get_product_details",
+            "Retrieves the extended description for a product SKU. " +
+            "Use get_product_info for price and stock status instead.")]
             ToolInvocationContext context,
-        [McpToolProperty("title", "The title of the note to retrieve.", isRequired: true)]
-            string title,
-        [BlobInput(BlobPath)] string? noteContent)
+        [McpToolProperty("sku", "The product SKU to look up.", isRequired: true)]
+            string sku,
+        [BlobInput(BlobPath)] string? details)
     {
-        logger.LogInformation("Getting note: {Title}", title);
-        return noteContent ?? $"Note '{title}' not found. Use save_note to create it.";
+        logger.LogInformation("Getting product details for SKU: {Sku}", sku);
+        return details ?? $"No extended details saved for '{sku}'. Use save_product_details to add them.";
     }
 }
