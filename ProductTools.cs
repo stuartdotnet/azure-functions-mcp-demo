@@ -1,3 +1,6 @@
+#pragma warning disable IDE0060 // MCP trigger parameters are bound by name and cannot be renamed
+using Azure;
+using Azure.Storage.Blobs;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Extensions.Mcp;
 using Microsoft.Extensions.Logging;
@@ -8,7 +11,7 @@ namespace FunctionsMcpDemo;
 // In-memory data. No storage required.
 // Shows: McpToolProperty with isRequired, multiple tools in one class.
 
-public class ProductTools(ILogger<ProductTools> logger)
+public partial class ProductTools(ILogger<ProductTools> logger)
 {
     private static readonly Dictionary<string, Product> Catalogue = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -29,7 +32,7 @@ public class ProductTools(ILogger<ProductTools> logger)
         [McpToolProperty("sku", "The product SKU (e.g. WIDGET-001, GADGET-PRO).", isRequired: true)]
             string sku)
     {
-        logger.LogInformation("Product info requested for SKU: {Sku}", sku);
+        LogProductInfoRequest(sku);
 
         if (!Catalogue.TryGetValue(sku, out var product))
             return $"Product '{sku}' not found. Call list_products to see available SKUs.";
@@ -42,13 +45,19 @@ public class ProductTools(ILogger<ProductTools> logger)
         [McpToolTrigger("list_products", "Returns all available products and their SKUs.")]
             ToolInvocationContext context)
     {
-        logger.LogInformation("Product list requested");
+        LogProductListRequest();
 
         var lines = Catalogue.Select(kvp =>
             $"  {kvp.Key}: {kvp.Value.Name} (£{kvp.Value.Price:F2}) — {kvp.Value.StockStatus}");
 
         return "Available products:\n" + string.Join("\n", lines);
     }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Product info requested for SKU: {Sku}")]
+    private partial void LogProductInfoRequest(string sku);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Product list requested")]
+    private partial void LogProductListRequest();
 
     private record Product(string Name, decimal Price, string StockStatus);
 }
@@ -58,7 +67,7 @@ public class ProductTools(ILogger<ProductTools> logger)
 // Requires Azurite locally (or a real storage account).
 // Shows: MCP trigger + Azure binding composability.
 
-public class ProductDetailsTools(ILogger<ProductDetailsTools> logger)
+public partial class ProductDetailsTools(ILogger<ProductDetailsTools> logger)
 {
     private const string BlobPath = "products/{mcptoolargs.sku}.txt";
 
@@ -74,21 +83,35 @@ public class ProductDetailsTools(ILogger<ProductDetailsTools> logger)
         [McpToolProperty("details", "The extended product description to save.", isRequired: true)]
             string details)
     {
-        logger.LogInformation("Saving product details for SKU: {Sku} ({Length} chars)", sku, details.Length);
+        LogSaveProductDetails(sku, details.Length);
         return details;
     }
 
     [Function(nameof(GetProductDetails))]
-    public string GetProductDetails(
+    public async Task<string> GetProductDetails(
         [McpToolTrigger("get_product_details",
             "Retrieves the extended description for a product SKU. " +
             "Use get_product_info for price and stock status instead.")]
             ToolInvocationContext context,
         [McpToolProperty("sku", "The product SKU to look up.", isRequired: true)]
             string sku,
-        [BlobInput(BlobPath)] string? details)
+        [BlobInput(BlobPath)] BlobClient blob)
     {
-        logger.LogInformation("Getting product details for SKU: {Sku}", sku);
-        return details ?? $"No extended details saved for '{sku}'. Use save_product_details to add them.";
+        LogGetProductDetails(sku);
+        try
+        {
+            var response = await blob.DownloadContentAsync();
+            return response.Value.Content.ToString();
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            return $"No extended details saved for '{sku}'. Use save_product_details to add them.";
+        }
     }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Saving product details for SKU: {Sku} ({Length} chars)")]
+    private partial void LogSaveProductDetails(string sku, int length);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Getting product details for SKU: {Sku}")]
+    private partial void LogGetProductDetails(string sku);
 }
